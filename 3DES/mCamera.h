@@ -14,13 +14,14 @@ public:
 	bool init();
 	void drawFrame();
 private:
-	void initGLFrame();
-	GLuint genTexture();
-	void setTextureData(std::tr1::shared_ptr<unsigned char> frame);
 	mShader * camShader;
 	GLuint vertexBuffer;
 	GLuint uvBuffer;
 	glm::mat4 MVP;
 	GLuint textureID;
 	GLuint samplerID;
+
+	void initGLFrame();
+	GLuint genTexture();
+	void setTextureData(std::tr1::shared_ptr<unsigned char> frame);
 };

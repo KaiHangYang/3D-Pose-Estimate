@@ -15,37 +15,17 @@
 #include "mShader.h"
 #include "mCamera.h"
 #include "mDefs.h"
-
+#include "mMeshRender.h"
+#include "test.h"
 
 using namespace glm;
 
-void error_callback(int error, const char *description) {
-	printf("%s\n", description);
-}
 
 GLFWwindow * InitWindow();
 void SetOpenGLState();
-
-struct Vertex {
-	glm::vec3 Position;
-};
-
-
-class Mesh {
-public:
-	std::vector<Vertex> vertices;
-	std::vector<unsigned> indices;
-	//std::vector<Texture> textures;
-	Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices);
-
-	void setupMesh();
-	void draw();
-	GLuint VAO;
-	GLuint VBO;
-	GLuint EBO;
-};
-
-
+void error_callback(int error, const char *description) {
+	printf("%s\n", description);
+}
 
 int main(void) {
 	// init glfw 
@@ -62,52 +42,33 @@ int main(void) {
 	glBindVertexArray(vertexArrayID);
 
 	mShader camShader("v.shader", "f.shader");
-	mCamera mcam(wndWidth, wndHeight, &camShader);
+	mShader shader("v2.shader", "f2.shader");
 
+	mCamera mcam(wndWidth, wndHeight, &camShader);
 	if (false == mcam.init()) {
 		system("pause");
 		return -1;
 	}
 
-	// 加载模型
-	//Assimp::Importer importer;
-	//const aiScene * sphereScene = importer.ReadFile("./cylinder.ply", aiProcess_Triangulate | aiProcess_FlipUVs);
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
+	// camera matrix
+	glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 3.17), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 
-	//if (!sphereScene || sphereScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !sphereScene->mRootNode) {
-	//	std::cout << "ERROR: ASSIMP::" << importer.GetErrorString() << std::endl;
-	//	system("pause");
-	//	return -1;
-	//}
-	//aiNode * snode = sphereScene->mRootNode;
-	//aiMesh * mesh = sphereScene->mMeshes[snode->mMeshes[0]];
-	//
-	//std::vector<Vertex> vertices;
-	//std::vector<unsigned int> indices;
-	//
-	//for (unsigned int i = 0; i < mesh->mNumVertices; ++i) {
-	//	Vertex v;
-	//	glm::vec3 tmpv;
-	//	tmpv.x = mesh->mVertices[i].x;
-	//	tmpv.y = mesh->mVertices[i].y;
-	//	tmpv.z = mesh->mVertices[i].z;
-	//	v.Position = tmpv; // glm中对象是copy赋值
+	glm::mat4 model = glm::mat4(1.0f);
+	// model matrix
+	glm::mat4 MVP = projection*view*model;
 
-	//	vertices.push_back(v);
-	//}
-	//for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
-	//	aiFace face = mesh->mFaces[i];
+	mMeshRender meshes("sphere.ply");
 
-	//	for (unsigned int j = 0; j < face.mNumIndices; j++) {
-	//		indices.push_back(face.mIndices[j]);
-	//	}
-	//}
-	//Mesh myMesh(vertices, indices);
 
 	do {
-		
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+		glBindVertexArray(vertexArrayID);
 		mcam.drawFrame();
+		
+		shader.use();
+		shader.setVal("MVP", MVP);
+		meshes.render();
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -159,32 +120,4 @@ void SetOpenGLState() {
 	// enable depth test and accept fragment if it closer to the camera than the former one
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
-}
-
-Mesh::Mesh(std::vector<Vertex> vertices, std::vector<unsigned int> indices) {
-	this->vertices = vertices;
-	this->indices = indices;
-	glGenVertexArrays(1, &VAO);
-	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
-	//this->textures = textures;
-}
-void Mesh::setupMesh() {
-	// VAO保存了每个绘制过程中的数据
-	glBindVertexArray(VAO);
-
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), &vertices[0], GL_STATIC_DRAW);
-
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size()*sizeof(unsigned int), &indices[0], GL_STATIC_DRAW);
-}
-void Mesh::draw() {
-	glBindVertexArray(VAO);
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void *)0);
-	glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
-	glDisableVertexAttribArray(0);
 }
