@@ -1,4 +1,4 @@
-#include "mshader.h"
+#include "mShader.h"
 
 
 #include <fstream>
@@ -94,4 +94,8 @@ void mShader::setVal(const char * val_name, unsigned int val) {
 void mShader::setVal(const char * val_name, float val) {
 	GLuint valPos = glGetUniformLocation(ID, val_name);
 	glUniform1f(valPos, val);
+}
+void mShader::setVal(const char * val_name, int val) {
+	GLuint val_pos = glGetUniformLocation(ID, val_name);
+	glUniform1i(val_pos, val);
 }
