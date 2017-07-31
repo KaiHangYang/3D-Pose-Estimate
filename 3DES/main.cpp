@@ -73,8 +73,37 @@ int main(void) {
 	
 	// 为模型添加光照信息
 
-	std::vector<float> vertexs({0, 0, 0, 0.5f, 0.5f, 0, 1, 0, 0, 0, 0.3f, 0.5f, -0.5f, 1.f, -0.5f});
-	std::vector<unsigned int> indics({0, 1, 1, 2, 2, 3, 3, 4, 4, 0});
+	std::vector<float> vertexs({0.1f, 0.7f, 0.4f, 
+								0.003f, 0.5f, 0.1f,
+								0, 0.3f, 0,
+								0, 0, 0,
+								0, -0.3f, 0,
+								-0.3f, -0.6f, 0.3f,
+								-0.4f, -0.8f, 0.35f,
+								-0.5f, -0.85f, 0.45f,
+								0.3f, -0.6f, 0.3f,
+								0.4f, -0.8f, 0.35f,
+								0.5f, -0.85f, 0.45f,
+								-0.4f, 0.25f, 0.3f,
+								-0.48f, -0.1f, 0.5f,
+								0.4f, 0.25f, 0.3f,
+								0.48f, -0.1f, 0.5f});
+	std::vector<unsigned int> indics({	
+										0, 1,
+										1, 2,
+										2, 3,
+										3, 4, 
+										4, 5,
+										5, 6,
+										6, 7,
+										4, 8, 
+										8, 9,
+										9, 10,
+										2, 11, 
+										11, 12,
+										2, 13,
+										13, 14
+												});
 
 	do {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

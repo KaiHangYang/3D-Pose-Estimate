@@ -181,7 +181,14 @@ void mMeshRender::render(std::vector<float> vertexs, std::vector<unsigned int> i
 		// 涉及到 已知初始向量和最终向量求旋转过程。可以考虑点乘和×乘的问题
 
 		model = glm::translate(model, glm::vec3(lineCen[0], lineCen[1], lineCen[2]));
-		model = glm::rotate(model, (float)glm::acos(glm::dot(vFrom, vTo)), glm::normalize(glm::cross(vFrom, vTo)));
+		// 注意：两个方向重合的向量的叉乘是没有意义的
+		float angle = (float)glm::acos(glm::dot(vFrom, vTo));
+		if (angle <= 0.0000001) {
+			model = model;
+		}
+		else {
+			model = glm::rotate(model, angle, glm::normalize(glm::cross(vFrom, vTo)));
+		}
 		model = glm::scale(model, glm::vec3(1, length/0.1, 1));
 		
 		glm::mat4 MVP = VP * model;
