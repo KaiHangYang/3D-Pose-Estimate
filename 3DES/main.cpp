@@ -42,7 +42,7 @@ int main(void) {
 	glBindVertexArray(vertexArrayID);
 
 	mShader camShader("v.shader", "f.shader");
-	mShader shader("v2.shader", "f2.shader");
+	mShader objShader("v2.shader", "f2.shader");
 
 	mCamera mcam(wndWidth, wndHeight, &camShader);
 	if (false == mcam.init()) {
@@ -52,23 +52,36 @@ int main(void) {
 
 	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
 	// camera matrix
-	glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 3.17), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 
 	glm::mat4 model = glm::mat4(1.0f);
+	//model = glm::scale(model, glm::vec3(0.05, 0.05, 0.05));
+
+	//model = glm::translate(model, glm::vec3(0.4, 0, 0));
+	//model = glm::rotate(model, (float)glm::radians(30.f), glm::vec3(1, 2, 1));
+	
+
 	// model matrix
 	glm::mat4 MVP = projection*view*model;
 
-	mMeshRender meshes("sphere.ply");
+	// 所有的mesh 使用同一个投影矩阵
+	// 圆柱本身长度为0.1 宽度为0.03 
+	mMeshRender meshes(view, projection, &objShader);
+	meshes.addMesh("sphere.ply");
+	meshes.addMesh("cylinder.ply");
+	
+	
+	// 为模型添加光照信息
 
+	std::vector<float> vertexs({0, 0, 0, 0.5f, 0.5f, 0, 1, 0, 0, 0, 0.3f, 0.5f, -0.5f, 1.f, -0.5f});
+	std::vector<unsigned int> indics({0, 1, 1, 2, 2, 3, 3, 4, 4, 0});
 
 	do {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glBindVertexArray(vertexArrayID);
 		mcam.drawFrame();
-		
-		shader.use();
-		shader.setVal("MVP", MVP);
-		meshes.render();
+
+		meshes.render(vertexs, indics);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();

@@ -99,3 +99,7 @@ void mShader::setVal(const char * val_name, int val) {
 	GLuint val_pos = glGetUniformLocation(ID, val_name);
 	glUniform1i(val_pos, val);
 }
+void mShader::setVal(const char * val_name, glm::vec3 val) {
+	GLuint val_pos = glGetUniformLocation(ID, val_name);
+	glUniform3fv(val_pos, 1, &val[0]);
+}
