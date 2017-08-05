@@ -37,7 +37,7 @@ public:
 	mMeshRender(glm::mat4 &view, glm::mat4 &proj, mShader * shader);
 	~mMeshRender();
 	void addMesh(std::string mesh_path);
-	void render(std::vector<float> vertexs, std::vector<unsigned int> indices);
+	void render(std::vector<float> vertexs, std::vector<unsigned int> indices, glm::mat4  &model);
 private:
 	GLuint VAO;
 	glm::mat4 VP; // VP”≥…‰æÿ’Û

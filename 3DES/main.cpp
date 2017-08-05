@@ -31,7 +31,7 @@ bool isMousePressed = false;
 double initX, initY;
 double curX, curY;
 glm::mat4 rotateMat = glm::mat4(1.0);
-glm::mat4 model;
+glm::mat4 model = glm::mat4(1.0);
 
 void mouse_button_callback(GLFWwindow * window, int button, int action, int mods);
 
@@ -61,19 +61,19 @@ int main(void) {
 	//glm::mat4 projection = glm::ortho(0.0f, (float)wndWidth, 0.0f, (float)wndHeight, 0.1f, 100.0f);
 	// camera matrix
 	glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 3.62), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-	model = glm::mat4(1.0f);
+	//model = glm::mat4(1.0f);
 	//model = glm::scale(model, glm::vec3(4, 4, 4));
 
 	// model matrix
-	glm::mat4 MVP = projection*view*model;
+	//glm::mat4 MVP = projection*view*model;
 
 	// 所有的mesh 使用同一个投影矩阵
 	// 圆柱本身长度为0.1 宽度为0.03 
-	//mMeshRender meshes(view, projection, &objShader);
-	//meshes.addMesh("sphere.ply");
-	//meshes.addMesh("cylinder.ply");
+	mMeshRender meshes(view, projection, &objShader);
+	meshes.addMesh("sphere.ply");
+	meshes.addMesh("cylinder.ply");
 
-	Assimp::Importer importer;
+	/*Assimp::Importer importer;
 	const aiScene * scene = importer.ReadFile("test.ply", aiProcess_Triangulate | aiProcess_FlipUVs);
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
 		std::cout << "Model file read failed！" << std::endl;
@@ -84,7 +84,7 @@ int main(void) {
 	glGenVertexArrays(1, &vertexArrayID);
 	glBindVertexArray(vertexArrayID);
 	MeshEntry mesh(scene->mMeshes[0], vertexArrayID);
-
+*/
 
 	std::vector<float> vertexs({0.1f, 0.7f, 0.4f, 
 								0.003f, 0.5f, 0.1f,
@@ -122,33 +122,65 @@ int main(void) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		mcam.drawFrame();
 		
-		objShader.use();
+		/*objShader.use();*/
 		glm::mat4 curModel;
-
 		if (isMousePressed && (initX != curX || initY != curY)) {
 			// 说明鼠标按下去了,这时候需要修改model
-			float tmpinitX = ((float)(wndWidth - initX - 1) / (float)wndWidth - 0.5)*2;
+			float tmpZ2;
+			float tmpinitX = ((float)(wndWidth - initX - 1) / (float)wndHeight - 0.5)*2;
 			float tmpinitY = ((float)initY / (float)wndHeight - 0.5)*2;
-			float tmpinitZ = sqrt(1 - tmpinitX*tmpinitX - tmpinitY*tmpinitY);
-			glm::vec3 initVec = glm::normalize(glm::vec3(tmpinitX, tmpinitY, tmpinitZ));
+			tmpZ2 = 1 - tmpinitX*tmpinitX - tmpinitY*tmpinitY;
+			glm::vec3 initVec(1.0);
 
-			float tmpcurX = ((float)(wndWidth - curX - 1) / (float)wndWidth - 0.5)*2;
-			float tmpcurY = ((float)curY / (float)wndHeight - 0.5)*2;
-			float tmpcurZ = sqrt(1 - tmpcurX*tmpcurX - tmpcurY*tmpcurY);
-			glm::vec3 curVec = glm::normalize(glm::vec3(tmpcurX, tmpcurY, tmpcurZ));
+			if (tmpZ2 < 0) {
+				// 超出边界
+				float tLen = sqrt(tmpinitY*tmpinitY + tmpinitX*tmpinitX);
+				glm::vec4 from(tmpinitX / tLen, tmpinitY / tLen, 0, 1.0);
+				// 将这个圆上点进行旋转即可得到相应的圆上点
+				glm::mat4 rmat = glm::rotate(glm::mat4(1.0), 1 - tLen, glm::cross(glm::vec3(tmpinitX, tmpinitY, 0), glm::vec3(0, 0, 1)));
+				
+				glm::vec4 tmpm = rmat* from;
+				initVec.x = tmpm.x;
+				initVec.y = tmpm.y;
+				initVec.z = tmpm.z;
+			}
+			else {
+				initVec = glm::normalize(glm::vec3(tmpinitX, tmpinitY, sqrt(tmpZ2)));
+			}
 			
-			rotateMat = glm::rotate(model, glm::acos(glm::dot(initVec, curVec)), glm::cross(curVec, initVec));
+			// 处理超边界的问题
+			float tmpcurX = ((float)(wndWidth - curX - 1) / (float)wndHeight - 0.5)*2;
+			float tmpcurY = ((float)curY / (float)wndHeight - 0.5)*2;
+			glm::vec3 curVec;
 
-			curModel = rotateMat;
+			tmpZ2 = 1 - tmpcurX*tmpcurX - tmpcurY*tmpcurY;
+
+			if (tmpZ2 < 0) {
+				// 超出边界
+				float tLen = sqrt(tmpcurY*tmpcurY + tmpcurX*tmpcurX);
+				glm::vec4 from(tmpcurX / tLen, tmpcurY / tLen, 0, 1.0);
+				// 将这个圆上点进行旋转即可得到相应的圆上点
+				glm::mat4 rmat = glm::rotate(glm::mat4(1.0), 1 - tLen, glm::cross(glm::vec3(tmpcurX, tmpcurY, 0), glm::vec3(0, 0, 1)));
+
+				glm::vec4 tmpm = rmat* from;
+				curVec.x = tmpm.x;
+				curVec.y = tmpm.y;
+				curVec.z = tmpm.z;
+			}
+			else {
+				curVec = glm::normalize(glm::vec3(tmpcurX, tmpcurY, sqrt(tmpZ2)));
+			}
+			
+			rotateMat = glm::rotate(glm::mat4(1.0), glm::acos(glm::dot(initVec, curVec)), glm::cross(curVec, initVec));
+
+			curModel = rotateMat * model;
 		}
 		else {
 			curModel = model;
 		}
 		
 
-		 
-
-		MVP = projection * view * (curModel);
+		/*MVP = projection * view * (curModel);
 		objShader.setVal("MVP", MVP);
 		objShader.setVal("modelMat", curModel);
 		objShader.setVal("lightPos", glm::vec3(10.0, 10.0, 10.0));
@@ -156,9 +188,9 @@ int main(void) {
 		objShader.setVal("viewPos", glm::vec3(0, 0, 3));
 		objShader.setVal("fragColor", glm::vec3(1.0, 0, 0));
 
-		mesh.render();
+		mesh.render();*/
 
-		//meshes.render(vertexs, indics);
+		meshes.render(vertexs, indics, curModel);
 		// 尝试处理旋转
 
 		
@@ -233,8 +265,8 @@ void mouse_button_callback(GLFWwindow * window, int button, int action, int mods
 		case GLFW_MOUSE_BUTTON_LEFT:
 			printf("Release left Key!\n");
 			isMousePressed = false;
-			model = rotateMat;
-			rotateMat = glm::mat4(1.0);
+			model = rotateMat * model;
+			//rotateMat = glm::mat4(1.0);
 			break;
 		}
 	}
