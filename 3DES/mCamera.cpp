@@ -6,24 +6,32 @@
 mCamera::~mCamera() {
 	glDeleteBuffers(1, &vertexBuffer);
 	glDeleteBuffers(1, &uvBuffer);
+
+	glBindVertexArray(0);
+	glDeleteVertexArrays(1, &VAO);
 }
 mCamera::mCamera(int wndWidth, int wndHeight, mShader *camShader) {
 	this->wndWidth = wndWidth;
 	this->wndHeight = wndHeight;
 	this->camShader = camShader;
+	glGenVertexArrays(1, &VAO);
+
 	m_camera = std::tr1::shared_ptr<CCameraDS>(new CCameraDS);
 }
 bool mCamera::init() {
+	glBindVertexArray(VAO);
 	bool result = m_camera->OpenCamera(0, false, wndWidth, wndHeight);
 	if (false == result) {
 		std::cout << "ERROR: Camera init failed!" << std::endl;
 		return false;
 	}
 	initGLFrame();
+	glBindVertexArray(0);
 	return true;
 }
 
 void mCamera::initGLFrame() {
+
 	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
 	// camera matrix
 	glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 3.62), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
@@ -63,6 +71,7 @@ void mCamera::initGLFrame() {
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void *)0);
 }
 GLuint mCamera::genTexture() {
+
 	GLuint texture;
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
@@ -78,6 +87,8 @@ void mCamera::setTextureData(std::tr1::shared_ptr<unsigned char> frame) {
 	glGenerateMipmap(GL_TEXTURE_2D);
 }
 void mCamera::drawFrame() {
+	glBindVertexArray(VAO);
+
 	camShader->use();
 	camShader->setVal("MVP", MVP);
 	std::tr1::shared_ptr<unsigned char> frame = m_camera->QueryFrame();
@@ -90,9 +101,9 @@ void mCamera::drawFrame() {
 	glEnableVertexAttribArray(0);
 	glEnableVertexAttribArray(1);
 
-	glDrawArrays(GL_TRIANGLES, 0, 6); // 第三个参数的含义是顶点数目
+	glDrawArrays(GL_TRIANGLES, 0, 6); // 第三个参数的含义是 顶点的数目
 
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
-
+	glBindVertexArray(0);
 }

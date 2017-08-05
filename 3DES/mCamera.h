@@ -14,6 +14,7 @@ public:
 	bool init();
 	void drawFrame();
 private:
+	GLuint VAO;
 	mShader * camShader;
 	GLuint vertexBuffer;
 	GLuint uvBuffer;

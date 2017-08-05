@@ -27,6 +27,40 @@ void error_callback(int error, const char *description) {
 	printf("%s\n", description);
 }
 
+bool isMousePressed = false;
+double initX, initY;
+double curX, curY;
+
+void mouse_button_callback(GLFWwindow * window, int button, int action, int mods) {
+	if (action == GLFW_PRESS) {
+		switch (button) {
+		case GLFW_MOUSE_BUTTON_LEFT:
+			printf("Pressed left Key!\n");
+			initX = curX;
+			initY = curY;
+			isMousePressed = true;
+			break;
+		}
+	}
+	else {
+		switch (button) {
+		case GLFW_MOUSE_BUTTON_LEFT:
+			printf("Release left Key!\n");
+			isMousePressed = false;
+			break;
+		}
+	}
+}
+
+void mouse_move_callback(GLFWwindow * window, double x, double y) {
+	curX = x;
+	curY = y;
+
+	if (isMousePressed) {
+		std::cout << "cursor is at (" << curX << ", " << curY << ")" << std::endl;
+	}
+}
+
 int main(void) {
 	// init glfw 
 	GLFWwindow * window;
@@ -50,16 +84,11 @@ int main(void) {
 		return -1;
 	}
 
-	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.0f, 1000.0f);
 	// camera matrix
-	glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-
+	glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 3.62), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 	glm::mat4 model = glm::mat4(1.0f);
-	//model = glm::scale(model, glm::vec3(0.05, 0.05, 0.05));
-
-	//model = glm::translate(model, glm::vec3(0.4, 0, 0));
-	//model = glm::rotate(model, (float)glm::radians(30.f), glm::vec3(1, 2, 1));
-	
+	//model = glm::scale(model, glm::vec3(4, 4, 4));
 
 	// model matrix
 	glm::mat4 MVP = projection*view*model;
@@ -69,9 +98,16 @@ int main(void) {
 	mMeshRender meshes(view, projection, &objShader);
 	meshes.addMesh("sphere.ply");
 	meshes.addMesh("cylinder.ply");
-	
-	
-	// 为模型添加光照信息
+	/*Assimp::Importer importer;
+	const aiScene * scene = importer.ReadFile("sphere.ply", aiProcess_Triangulate | aiProcess_FlipUVs);
+	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+		std::cout << "Model file read failed！" << std::endl;
+		glfwTerminate();
+		return -1;
+	}
+
+	MeshEntry mesh(scene->mMeshes[0], vertexArrayID);*/
+
 
 	std::vector<float> vertexs({0.1f, 0.7f, 0.4f, 
 								0.003f, 0.5f, 0.1f,
@@ -107,9 +143,19 @@ int main(void) {
 
 	do {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glBindVertexArray(vertexArrayID);
-		mcam.drawFrame();
 
+		//mcam.drawFrame();
+		//objShader.use();
+
+		//objShader.setVal("MVP", MVP);
+		//objShader.setVal("modelMat", model);
+		//objShader.setVal("lightPos", glm::vec3(10.0, 10.0, 10.0));
+		//objShader.setVal("normMat", glm::transpose(glm::inverse(model)));
+		//objShader.setVal("viewPos", glm::vec3(0, 0, 3));
+		//objShader.setVal("fragColor", glm::vec3(1.0, 0, 0));
+
+		//mesh.render();
+		
 		meshes.render(vertexs, indics);
 
 		glfwSwapBuffers(window);
@@ -142,7 +188,9 @@ GLFWwindow * InitWindow() {
 		return NULL;
 	}
 	glfwMakeContextCurrent(window);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+	//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
+	glfwSetCursorPosCallback(window, mouse_move_callback);
 	glfwSwapInterval(0);
 
 	if (glewInit() != GLEW_OK) {
