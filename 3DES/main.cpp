@@ -71,10 +71,6 @@ int main(void) {
 	}
 
 	SetOpenGLState();
-	GLuint vertexArrayID;
-	glGenVertexArrays(1, &vertexArrayID);
-	glBindVertexArray(vertexArrayID);
-
 	mShader camShader("v.shader", "f.shader");
 	mShader objShader("v2.shader", "f2.shader");
 
@@ -83,12 +79,16 @@ int main(void) {
 		system("pause");
 		return -1;
 	}
-
-	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.0f, 1000.0f);
+	// 倒数第二个参数必须为0.1
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
+	//glm::mat4 projection = glm::ortho(0.0f, (float)wndWidth, 0.0f, (float)wndHeight, 0.1f, 100.0f);
 	// camera matrix
 	glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 3.62), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 	glm::mat4 model = glm::mat4(1.0f);
 	//model = glm::scale(model, glm::vec3(4, 4, 4));
+
+	model = glm::translate(model, glm::vec3(0, 0, 3));
+
 
 	// model matrix
 	glm::mat4 MVP = projection*view*model;
@@ -98,15 +98,6 @@ int main(void) {
 	mMeshRender meshes(view, projection, &objShader);
 	meshes.addMesh("sphere.ply");
 	meshes.addMesh("cylinder.ply");
-	/*Assimp::Importer importer;
-	const aiScene * scene = importer.ReadFile("sphere.ply", aiProcess_Triangulate | aiProcess_FlipUVs);
-	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-		std::cout << "Model file read failed！" << std::endl;
-		glfwTerminate();
-		return -1;
-	}
-
-	MeshEntry mesh(scene->mMeshes[0], vertexArrayID);*/
 
 
 	std::vector<float> vertexs({0.1f, 0.7f, 0.4f, 
@@ -143,26 +134,14 @@ int main(void) {
 
 	do {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-		//mcam.drawFrame();
-		//objShader.use();
-
-		//objShader.setVal("MVP", MVP);
-		//objShader.setVal("modelMat", model);
-		//objShader.setVal("lightPos", glm::vec3(10.0, 10.0, 10.0));
-		//objShader.setVal("normMat", glm::transpose(glm::inverse(model)));
-		//objShader.setVal("viewPos", glm::vec3(0, 0, 3));
-		//objShader.setVal("fragColor", glm::vec3(1.0, 0, 0));
-
-		//mesh.render();
+		mcam.drawFrame();
 		
 		meshes.render(vertexs, indics);
+		
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	} while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
-
-	glDeleteVertexArrays(1, &vertexArrayID);
 	glfwTerminate();
 	
 	return 0;
