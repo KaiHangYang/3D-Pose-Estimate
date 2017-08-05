@@ -30,36 +30,13 @@ void error_callback(int error, const char *description) {
 bool isMousePressed = false;
 double initX, initY;
 double curX, curY;
+glm::mat4 rotateMat = glm::mat4(1.0);
+glm::mat4 model;
 
-void mouse_button_callback(GLFWwindow * window, int button, int action, int mods) {
-	if (action == GLFW_PRESS) {
-		switch (button) {
-		case GLFW_MOUSE_BUTTON_LEFT:
-			printf("Pressed left Key!\n");
-			initX = curX;
-			initY = curY;
-			isMousePressed = true;
-			break;
-		}
-	}
-	else {
-		switch (button) {
-		case GLFW_MOUSE_BUTTON_LEFT:
-			printf("Release left Key!\n");
-			isMousePressed = false;
-			break;
-		}
-	}
-}
+void mouse_button_callback(GLFWwindow * window, int button, int action, int mods);
 
-void mouse_move_callback(GLFWwindow * window, double x, double y) {
-	curX = x;
-	curY = y;
 
-	if (isMousePressed) {
-		std::cout << "cursor is at (" << curX << ", " << curY << ")" << std::endl;
-	}
-}
+void mouse_move_callback(GLFWwindow * window, double x, double y);
 
 int main(void) {
 	// init glfw 
@@ -84,20 +61,29 @@ int main(void) {
 	//glm::mat4 projection = glm::ortho(0.0f, (float)wndWidth, 0.0f, (float)wndHeight, 0.1f, 100.0f);
 	// camera matrix
 	glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 3.62), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-	glm::mat4 model = glm::mat4(1.0f);
+	model = glm::mat4(1.0f);
 	//model = glm::scale(model, glm::vec3(4, 4, 4));
-
-	model = glm::translate(model, glm::vec3(0, 0, 3));
-
 
 	// model matrix
 	glm::mat4 MVP = projection*view*model;
 
 	// 所有的mesh 使用同一个投影矩阵
 	// 圆柱本身长度为0.1 宽度为0.03 
-	mMeshRender meshes(view, projection, &objShader);
-	meshes.addMesh("sphere.ply");
-	meshes.addMesh("cylinder.ply");
+	//mMeshRender meshes(view, projection, &objShader);
+	//meshes.addMesh("sphere.ply");
+	//meshes.addMesh("cylinder.ply");
+
+	Assimp::Importer importer;
+	const aiScene * scene = importer.ReadFile("test.ply", aiProcess_Triangulate | aiProcess_FlipUVs);
+	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+		std::cout << "Model file read failed！" << std::endl;
+		glfwTerminate();
+		return -1;
+	}
+	GLuint vertexArrayID;
+	glGenVertexArrays(1, &vertexArrayID);
+	glBindVertexArray(vertexArrayID);
+	MeshEntry mesh(scene->mMeshes[0], vertexArrayID);
 
 
 	std::vector<float> vertexs({0.1f, 0.7f, 0.4f, 
@@ -136,12 +122,52 @@ int main(void) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		mcam.drawFrame();
 		
-		meshes.render(vertexs, indics);
+		objShader.use();
+		glm::mat4 curModel;
+
+		if (isMousePressed && (initX != curX || initY != curY)) {
+			// 说明鼠标按下去了,这时候需要修改model
+			float tmpinitX = ((float)(wndWidth - initX - 1) / (float)wndWidth - 0.5)*2;
+			float tmpinitY = ((float)initY / (float)wndHeight - 0.5)*2;
+			float tmpinitZ = sqrt(1 - tmpinitX*tmpinitX - tmpinitY*tmpinitY);
+			glm::vec3 initVec = glm::normalize(glm::vec3(tmpinitX, tmpinitY, tmpinitZ));
+
+			float tmpcurX = ((float)(wndWidth - curX - 1) / (float)wndWidth - 0.5)*2;
+			float tmpcurY = ((float)curY / (float)wndHeight - 0.5)*2;
+			float tmpcurZ = sqrt(1 - tmpcurX*tmpcurX - tmpcurY*tmpcurY);
+			glm::vec3 curVec = glm::normalize(glm::vec3(tmpcurX, tmpcurY, tmpcurZ));
+			
+			rotateMat = glm::rotate(model, glm::acos(glm::dot(initVec, curVec)), glm::cross(curVec, initVec));
+
+			curModel = rotateMat;
+		}
+		else {
+			curModel = model;
+		}
 		
+
+		 
+
+		MVP = projection * view * (curModel);
+		objShader.setVal("MVP", MVP);
+		objShader.setVal("modelMat", curModel);
+		objShader.setVal("lightPos", glm::vec3(10.0, 10.0, 10.0));
+		objShader.setVal("normMat", glm::transpose(glm::inverse(curModel)));
+		objShader.setVal("viewPos", glm::vec3(0, 0, 3));
+		objShader.setVal("fragColor", glm::vec3(1.0, 0, 0));
+
+		mesh.render();
+
+		//meshes.render(vertexs, indics);
+		// 尝试处理旋转
+
+		
+
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	} while (glfwGetKey(window, GLFW_KEY_ESCAPE) != GLFW_PRESS && glfwWindowShouldClose(window) == 0);
+
 	glfwTerminate();
 	
 	return 0;
@@ -189,4 +215,36 @@ void SetOpenGLState() {
 	// enable depth test and accept fragment if it closer to the camera than the former one
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LESS);
+}
+
+void mouse_button_callback(GLFWwindow * window, int button, int action, int mods) {
+	if (action == GLFW_PRESS) {
+		switch (button) {
+		case GLFW_MOUSE_BUTTON_LEFT:
+			printf("Pressed left Key!\n");
+			initX = curX;
+			initY = curY;
+			isMousePressed = true;
+			break;
+		}
+	}
+	else {
+		switch (button) {
+		case GLFW_MOUSE_BUTTON_LEFT:
+			printf("Release left Key!\n");
+			isMousePressed = false;
+			model = rotateMat;
+			rotateMat = glm::mat4(1.0);
+			break;
+		}
+	}
+}
+
+void mouse_move_callback(GLFWwindow * window, double x, double y) {
+	curX = x;
+	curY = y;
+
+	if (isMousePressed) {
+		std::cout << "cursor is at (" << curX << ", " << curY << ")" << std::endl;
+	}
 }
