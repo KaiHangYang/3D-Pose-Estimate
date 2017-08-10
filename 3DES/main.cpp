@@ -60,7 +60,7 @@ int main(void) {
 	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 4.0f / 3.0f, 0.1f, 100.0f);
 	//glm::mat4 projection = glm::ortho(0.0f, (float)wndWidth, 0.0f, (float)wndHeight, 0.1f, 100.0f);
 	// camera matrix
-	glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 3.62), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 5), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
 	//model = glm::mat4(1.0f);
 	//model = glm::scale(model, glm::vec3(4, 4, 4));
 
