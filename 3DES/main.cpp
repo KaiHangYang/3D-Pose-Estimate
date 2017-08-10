@@ -65,7 +65,7 @@ int main(void) {
 	//model = glm::scale(model, glm::vec3(4, 4, 4));
 
 	// model matrix
-	//glm::mat4 MVP = projection*view*model;
+	glm::mat4 MVP = projection*view*model;
 
 	// 所有的mesh 使用同一个投影矩阵
 	// 圆柱本身长度为0.1 宽度为0.03 
@@ -73,7 +73,7 @@ int main(void) {
 	meshes.addMesh("sphere.ply");
 	meshes.addMesh("cylinder.ply");
 
-	/*Assimp::Importer importer;
+	Assimp::Importer importer;
 	const aiScene * scene = importer.ReadFile("test.ply", aiProcess_Triangulate | aiProcess_FlipUVs);
 	if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
 		std::cout << "Model file read failed！" << std::endl;
@@ -84,7 +84,7 @@ int main(void) {
 	glGenVertexArrays(1, &vertexArrayID);
 	glBindVertexArray(vertexArrayID);
 	MeshEntry mesh(scene->mMeshes[0], vertexArrayID);
-*/
+
 
 	std::vector<float> vertexs({0.1f, 0.7f, 0.4f, 
 								0.003f, 0.5f, 0.1f,
@@ -122,7 +122,7 @@ int main(void) {
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		mcam.drawFrame();
 		
-		/*objShader.use();*/
+		
 		glm::mat4 curModel;
 		if (isMousePressed && (initX != curX || initY != curY)) {
 			// 说明鼠标按下去了,这时候需要修改model
@@ -178,17 +178,17 @@ int main(void) {
 		else {
 			curModel = model;
 		}
-		
+		//objShader.use();
 
-		/*MVP = projection * view * (curModel);
-		objShader.setVal("MVP", MVP);
-		objShader.setVal("modelMat", curModel);
-		objShader.setVal("lightPos", glm::vec3(10.0, 10.0, 10.0));
-		objShader.setVal("normMat", glm::transpose(glm::inverse(curModel)));
-		objShader.setVal("viewPos", glm::vec3(0, 0, 3));
-		objShader.setVal("fragColor", glm::vec3(1.0, 0, 0));
+		//MVP = projection * view * (curModel);
+		//objShader.setVal("MVP", MVP);
+		//objShader.setVal("modelMat", curModel);
+		//objShader.setVal("lightPos", glm::vec3(10.0, 10.0, 10.0));
+		//objShader.setVal("normMat", glm::transpose(glm::inverse(curModel)));
+		//objShader.setVal("viewPos", glm::vec3(0, 0, 3));
+		//objShader.setVal("fragColor", glm::vec3(1.0, 0, 0));
 
-		mesh.render();*/
+		//mesh.render();
 
 		meshes.render(vertexs, indics, curModel);
 		// 尝试处理旋转
